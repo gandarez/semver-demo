@@ -48,7 +48,7 @@ jobs:
               sha: context.sha
             })
       - name: Changelog
-        uses: gandarez/changelog-action@v1.0.0
+        uses: gandarez/changelog-action@v1.0.1
         id: changelog
         with:
           exclude: |
