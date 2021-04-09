@@ -1,0 +1,78 @@
+on:
+  push:
+    branches:
+      - "develop"
+      - "staging"
+      - "master"
+
+env:
+  GO_VERSION: "1.16"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: "Pull dependencies"
+        run: go mod vendor
+      - name: "Unit tests"
+        run: make test
+      - name: "Linter"
+        run: make lint
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: "Calculate semver tag"
+        id: semver-tag
+        uses: gandarez/semver-action@3-branches
+      - name: "Create tag"
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "refs/tags/${{ steps.semver-tag.outputs.semver_tag }}",
+              sha: context.sha
+            })
+      - name: Changelog
+        uses: gandarez/changelog-action@v1.0.0
+        id: changelog
+        with:
+          exclude: |
+            "^Merge pull request .*"
+      - name: "Sanitize changelog"
+        id: "changelog-sanitized"
+        run: |
+          export CHANGELOG="${{ steps.changelog.outputs.changelog }}"
+          CHANGELOG="${CHANGELOG//'%'/'%25'}"
+          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+          echo $CHANGELOG
+          echo "::set-output name=changelog::$CHANGELOG"
+      - name: "Create release"
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: "${{ steps.semver-tag.outputs.semver_tag }}",
+              name: "${{ steps.semver-tag.outputs.semver_tag }}",
+              body: "${{ steps.changelog-sanitized.outputs.changelog }}",
+              prerelease: ${{ steps.semver-tag.outputs.is_prerelease }}
+            })
+
