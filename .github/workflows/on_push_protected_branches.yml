@@ -39,7 +39,6 @@ jobs:
         with:
           debug: true
       - name: "Create tag locally"
-        uses: bash
         run: git tag ${{ steps.semver-tag.outputs.semver_tag }}
       - name: "Create tag"
         uses: actions/github-script@v3
