@@ -36,6 +36,8 @@ jobs:
       - name: "Calculate semver tag"
         id: semver-tag
         uses: gandarez/semver-action@3-branches
+        with:
+          debug: true
       - name: "Create tag"
         uses: actions/github-script@v3
         with:
@@ -52,7 +54,8 @@ jobs:
         id: changelog
         with:
           exclude: |
-            "^Merge pull request .*"
+            ^Merge pull request .*
+          debug: true
       - name: "Create Release"
         uses: softprops/action-gh-release@v1
         with:
