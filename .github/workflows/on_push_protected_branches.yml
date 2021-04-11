@@ -38,6 +38,9 @@ jobs:
         uses: gandarez/semver-action@3-branches
         with:
           debug: true
+      - name: "Create tag locally"
+        uses: bash
+        run: git tag ${{ steps.semver-tag.outputs.semver_tag }}
       - name: "Create tag"
         uses: actions/github-script@v3
         with:
@@ -53,6 +56,7 @@ jobs:
         uses: gandarez/changelog-action@v1.0.2
         id: changelog
         with:
+          current_tag: ${{ steps.semver-tag.outputs.semver_tag }}
           previous_tag: ${{ steps.semver-tag.outputs.previous_matching_tag }}
           exclude: |
             ^Merge pull request .*
