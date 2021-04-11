@@ -53,6 +53,7 @@ jobs:
         uses: gandarez/changelog-action@v1.0.2
         id: changelog
         with:
+          previous_tag: ${{ steps.semver-tag.outputs.previous_matching_tag }}
           exclude: |
             ^Merge pull request .*
           debug: true
